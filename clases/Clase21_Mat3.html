@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clase 22: Ecuaciones Diferenciales - Conceptos Básicos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js" async></script>
+  <style>
+    :root {
+      --navy: #005293;
+      --navy-dark: #003d6e;
+      --green: #008250;
+      --green-light: #e8f5e9;
+      --orange: #dc6b1f;
+      --orange-light: #fff3e0;
+      --bg-grad-1: #f8fafc;
+      --bg-grad-2: #e2e8f0;
+      --glass: rgba(255,255,255,0.94);
+      --shadow: 0 12px 40px rgba(0,20,50,0.13);
+      --radius: 16px;
+      --font-text: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      font-family: var(--font-text);
+      background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+      color: #1e293b;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 16px;
+    }
+
+    #presentation-container {
+      width: 100%; height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+
+    /* ─── SLIDE ─── */
+    .slide {
+      position: absolute;
+      width: 90%;
+      max-width: 1200px;
+      height: 82vh;
+      background: var(--glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2.2rem 2.8rem;
+      overflow-y: auto;
+      opacity: 0;
+      transform: scale(0.94) translateY(12px);
+      transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: all;
+      z-index: 10;
+    }
+
+    .slide h2 {
+      font-size: clamp(1.4rem, 2.3vw, 1.9rem);
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 1rem;
+      padding-bottom: 0.55rem;
+      border-bottom: 3px solid var(--navy);
+      display: inline-block;
+      letter-spacing: -0.02em;
+    }
+    .slide h3 { font-size: 1.2rem; font-weight: 600; color: var(--navy-dark); margin: 0.8rem 0 0.4rem; }
+    .slide p, .slide li, .slide td { font-size: clamp(0.9rem, 1.15vw, 1.05rem); line-height: 1.6; }
+    .slide ul, .slide ol { padding-left: 1.4rem; }
+    .slide li { margin-bottom: 0.4rem; }
+    .mt { margin-top: 0.9rem; } .mb { margin-bottom: 0.7rem; }
+    .bold { font-weight: 600; } .italic { font-style: italic; }
+    .center { text-align: center; }
+
+    /* ─── LAYOUT ─── */
+    .col-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 0.8rem; }
+    @media (max-width: 900px) { .col-layout { grid-template-columns: 1fr; gap: 1rem; } .slide { padding: 1.5rem; width: 96%; height: 88vh; } }
+
+    /* ─── BLOCKS ─── */
+    .block, .example-block, .alert-block {
+      padding: 0.9rem 1.1rem;
+      border-radius: 8px;
+      margin-bottom: 0.9rem;
+      border-left: 5px solid transparent;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .block { background: rgba(0, 82, 147, 0.06); border-left-color: var(--navy); }
+    .block .b-title, .block strong { color: var(--navy); }
+    .example-block { background: var(--green-light); border-left-color: var(--green); }
+    .example-block .b-title, .example-block strong { color: var(--green); }
+    .alert-block { background: var(--orange-light); border-left-color: var(--orange); }
+    .alert-block .b-title, .alert-block strong { color: var(--orange); }
+    .b-title { font-weight: 600; display: block; margin-bottom: 0.35rem; }
+
+    /* ─── REVEAL SYSTEM (Beamer pause/<n->) ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      will-change: opacity, transform;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── CODE ─── */
+    pre {
+      background: #0f172a; color: #e2e8f0; padding: 0.9rem 1rem;
+      border-radius: 10px; overflow-x: auto; font-family: var(--font-code);
+      font-size: clamp(0.72rem, 0.85vw, 0.88rem); line-height: 1.55;
+      box-shadow: inset 0 0 0 1px #334155; margin: 0.6rem 0; white-space: pre;
+    }
+    .mk { color: #7dd3fc; font-weight: 600; }
+    .mc { color: #6ee7b7; font-style: italic; }
+    .ms { color: #fca5a5; }
+    .mf { color: #fbbf24; }
+    .mn { color: #c084fc; }
+    code { font-family: var(--font-code); background: #f1f5f9; padding: 0.12em 0.3em; border-radius: 4px; font-size: 0.95em; }
+
+    /* ─── PROGRESS & NAV ─── */
+    #progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: linear-gradient(90deg, var(--navy), var(--green)); z-index: 200; transition: width 0.3s ease; }
+    #nav-controls {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+      padding: 8px 20px; border-radius: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.13); z-index: 100;
+    }
+    .nav-btn {
+      background: var(--navy); color: white; border: none; width: 38px; height: 38px;
+      border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center;
+      font-size: 1rem; transition: background 0.2s, transform 0.12s;
+    }
+    .nav-btn:hover { background: var(--navy-dark); transform: scale(1.08); }
+    .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+    #slide-counter { font-family: var(--font-code); font-weight: 600; color: #334155; font-size: 0.95rem; min-width: 60px; text-align: center; }
+
+    /* ─── PORTADA ─── */
+    .portada { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80%; text-align: center; }
+    .portada h1 { font-size: clamp(1.9rem, 3.5vw, 3.1rem); color: var(--navy); font-weight: 700; line-height: 1.15; }
+    .portada .sub { font-size: clamp(1.1rem, 2vw, 1.4rem); color: #475569; margin: 0.6rem 0 1.5rem; }
+    .portada .info { font-size: 1rem; color: #64748b; }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div id="presentation-container">
+
+  <!-- SLIDE 0: PORTADA -->
+  <div class="slide active" data-slide="0">
+    <div class="portada">
+      <i class="fas fa-wave-square" style="font-size:4rem; color:var(--navy); margin-bottom:1rem;"></i>
+      <h1>Ecuaciones Diferenciales:<br>Conceptos Básicos</h1>
+      <p class="sub">Definiciones, Orden y Soluciones</p>
+      <div class="block reveal">
+        <span class="b-title"><i class="fas fa-chalkboard-teacher"></i> Curso de Cálculo</span>
+        <span>Universidad / Facultad de Ingeniería — Clase 22</span>
+      </div>
+      <p class="info mt reveal"><i class="fas fa-calendar-day"></i> Fecha: [Insertar Fecha]</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 1: OBJETIVOS -->
+  <div class="slide" data-slide="1">
+    <h2><i class="fas fa-bullseye"></i> Objetivos de la Sesión</h2>
+    <div class="block reveal">
+      <span class="b-title"><i class="fas fa-flag"></i> Objetivo General</span>
+      <span>Comprender los conceptos fundamentales de las ecuaciones diferenciales ordinarias (EDO), incluyendo su clasificación y tipos de soluciones.</span>
+    </div>
+    <p class="mt bold">Objetivos Específicos:</p>
+    <ol>
+      <li class="reveal">Definir qué es una Ecuación Diferencial Ordinaria (EDO).</li>
+      <li class="reveal">Identificar el orden y el grado de una ecuación.</li>
+      <li class="reveal">Distinguir entre solución general, solución particular y solución singular.</li>
+      <li class="reveal">Verificar si una función dada es solución de una EDO.</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 2: INTRODUCCIÓN -->
+  <div class="slide" data-slide="2">
+    <h2><i class="fas fa-language"></i> Introducción: El Lenguaje del Cambio</h2>
+    <div class="reveal">
+      <p><strong>Problema algebraico:</strong> Encontrar un número \(x\) tal que \(x^2 - 4 = 0\). <span class="italic">Solución:</span> \(x = 2\). (Valor estático).</p>
+    </div>
+    <div class="mt reveal">
+      <p><strong>Problema diferencial:</strong> Encontrar una <strong>función</strong> \(y(x)\) tal que su derivada sea igual a la función misma.</p>
+      $$\frac{dy}{dx} = y$$
+    </div>
+    <p class="mt bold reveal">Pregunta: ¿Qué función conocida es igual a su propia pendiente?</p>
+    <div class="alert-block mt reveal">
+      <span class="b-title"><i class="fas fa-book-open"></i> Definición de Ecuación Diferencial</span>
+      <span>Es una ecuación que relaciona una función desconocida (variable dependiente) con sus derivadas respecto a una o más variables independientes.</span>
+      $$F(x, y, y', y'', \dots, y^{(n)}) = 0$$
+    </div>
+    <p class="mt reveal"><strong>Aplicación:</strong> Modelan fenómenos dinámicos: crecimiento poblacional, decaimiento radioactivo, enfriamiento, movimiento, circuitos eléctricos.</p>
+  </div>
+
+  <!-- SLIDE 3: CLASIFICACIÓN -->
+  <div class="slide" data-slide="3">
+    <h2><i class="fas fa-project-diagram"></i> Clasificación de Ecuaciones Diferenciales</h2>
+    <p class="reveal"><strong>1. Por su Orden:</strong> Es el orden de la derivada <strong>más alta</strong> que aparece en la ecuación.</p>
+    <ul class="mt">
+      <li class="reveal"><strong>Primer Orden:</strong> \(\frac{dy}{dx} + y = e^x\)</li>
+      <li class="reveal"><strong>Segundo Orden:</strong> \(y'' + 4y' = 0\)</li>
+      <li class="reveal"><strong>\(n\)-ésimo Orden:</strong> \(y^{(n)} + \dots = 0\)</li>
+    </ul>
+    <p class="mt bold reveal">2. Por su Linealidad:</p>
+    <div class="reveal">Una ecuación es <strong>lineal</strong> si cumple:</div>
+    <ol class="reveal">
+      <li class="reveal">La variable dependiente \(y\) y sus derivadas están elevadas a la primera potencia.</li>
+      <li class="reveal">No hay productos entre \(y\) y sus derivadas (ej. \(y \cdot y'\)).</li>
+      <li class="reveal">No hay funciones trascendentes de \(y\) (ej. \(\sin(y)\), \(e^y\)).</li>
+    </ol>
+    <p class="mt bold reveal">Ejemplos:</p>
+    <ul>
+      <li class="reveal">Lineal: \(y'' + x^2 y = \sin x\).</li>
+      <li class="reveal">No Lineal: \(y' + y^2 = 0\) (potencia 2) o \(y y' = 1\) (producto).</li>
+    </ul>
+  </div>
+
+  <!-- SLIDE 4: TIPOS DE SOLUCIONES -->
+  <div class="slide" data-slide="4">
+    <h2><i class="fas fa-check-double"></i> Tipos de Soluciones</h2>
+    <p class="reveal">Resolver una EDO significa encontrar la función \(y(x)\) que satisface la ecuación.</p>
+    <div class="block mt reveal">
+      <span class="b-title"><i class="fas fa-users"></i> Solución General</span>
+      <span>Es una solución que contiene tantas constantes arbitrarias independientes como sea el orden de la ecuación.</span>
+      <ul style="margin-top:0.4rem;">
+        <li>Ecuación de 1er orden \(\to\) 1 constante (\(C\)).</li>
+        <li>Ecuación de 2do orden \(\to\) 2 constantes (\(C_1, C_2\)).</li>
+      </ul>
+      <p>Representa una <strong>familia de curvas</strong>.</p>
+    </div>
+    <div class="example-block mt reveal">
+      <span class="b-title"><i class="fas fa-crosshairs"></i> Solución Particular</span>
+      <span>Es una solución obtenida al dar valores específicos a las constantes (\(C\)), generalmente mediante <strong>condiciones iniciales</strong>. Representa una <strong>curva específica</strong> de la familia.</span>
+    </div>
+    <div class="alert-block mt reveal">
+      <span class="b-title"><i class="fas fa-anchor"></i> Problema de Valor Inicial (PVI)</span>
+      <span>Ecuación Diferencial + Condición Inicial (\(y(t_0) = y_0\)).</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: EJEMPLO 1 -->
+  <div class="slide" data-slide="5">
+    <h2><i class="fas fa-pencil-alt"></i> Ejemplo Guiado 1: Verificación de Solución</h2>
+    <div class="block reveal">
+      <span class="b-title">Problema</span>
+      <span>Demostrar que \(y = x^2 + C e^x\) es la solución general de la ecuación:</span>
+      $$y' - y = 2x - x^2$$
+    </div>
+    <p class="bold mt reveal">Solución (Método de Verificación):</p>
+    <ol>
+      <li class="reveal">
+        <strong>Calcular la derivada de \(y\):</strong><br>
+        \(y = x^2 + C e^x \implies y' = 2x + C e^x\)
+      </li>
+      <li class="reveal">
+        <strong>Sustituir \(y\) y \(y'\) en la ecuación diferencial:</strong>
+        $$(2x + C e^x) - (x^2 + C e^x) = 2x - x^2$$
+      </li>
+      <li class="reveal">
+        <strong>Simplificar:</strong>
+        $$2x + \cancel{C e^x} - x^2 - \cancel{C e^x} = 2x - x^2$$
+        $$2x - x^2 = 2x - x^2 \quad \text{(Identidad verdadera)}$$
+      </li>
+    </ol>
+    <p class="bold mt reveal"><i class="fas fa-check-circle" style="color:var(--green)"></i> Conclusión: La función propuesta es solución de la EDO.</p>
+  </div>
+
+  <!-- SLIDE 6: EJEMPLO 2 -->
+  <div class="slide" data-slide="6">
+    <h2><i class="fas fa-pencil-alt"></i> Ejemplo Guiado 2: Problema de Valor Inicial</h2>
+    <div class="block reveal">
+      <span class="b-title">Problema</span>
+      <span>Encontrar la solución particular de \(y' = 3x^2\) que satisface \(y(1) = -1\).</span>
+    </div>
+    <ol class="mt">
+      <li class="reveal"><strong>Resolver la ED (Integrar):</strong> \(y = \int 3x^2 dx = x^3 + C\)</li>
+      <li class="reveal"><strong>Aplicar Condición Inicial:</strong> Sabemos que cuando \(x=1\), \(y=-1\).<br>\(-1 = (1)^3 + C\)</li>
+      <li class="reveal"><strong>Despejar \(C\):</strong> \(C = -1 - 1 = -2\)</li>
+      <li class="reveal"><strong>Escribir Solución Particular:</strong> \(\boxed{y = x^3 - 2}\)</li>
+    </ol>
+    <div class="example-block mt reveal">
+      <span class="b-title">Interpretación</span>
+      <span>De la familia de curvas \(y=x^3+C\) (desplazamiento vertical), seleccionamos la que pasa por el punto \((1, -1)\).</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: PRÁCTICA ACTIVA -->
+  <div class="slide" data-slide="7">
+    <h2><i class="fas fa-dumbbell"></i> Práctica Activa</h2>
+    <div class="alert-block reveal">
+      <span class="b-title"><i class="fas fa-clock"></i> Instrucciones</span>
+      <span>Clasifique y verifique. Tiempo: 30 minutos.</span>
+    </div>
+    <ol class="mt">
+      <li class="reveal"><strong>Determine el orden y la linealidad:</strong>
+        <ul>
+          <li class="reveal">\(y'' + y = 0\)</li>
+          <li class="reveal">\(\frac{dy}{dx} + y^2 = \sin x\)</li>
+          <li class="reveal">\(\left(\frac{dy}{dx}\right)^3 + y = x\)</li>
+        </ul>
+      </li>
+      <li class="reveal"><strong>Verifique si \(y = 2e^{3x}\) es solución de \(y' - 3y = 0\).</strong></li>
+      <li class="reveal"><strong>Dada \(y' = -4x\), encuentre la solución particular que pasa por \((0, 5)\).</strong></li>
+      <li class="reveal"><strong>Ley de Enfriamiento de Newton:</strong> La tasa de cambio de temperatura \(T\) es proporcional a la diferencia con el ambiente. Escriba la EDO que modela este fenómeno. (Solo plantear).</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 8: SOLUCIONES (RESUMEN) -->
+  <div class="slide" data-slide="8">
+    <h2><i class="fas fa-clipboard-list"></i> Soluciones a los Ejercicios (Resumen)</h2>
+    <div class="example-block reveal"><span class="b-title">Ejercicio 1:</span> <span>\(y'' + y = 0\): Orden 2, Lineal. \quad \(y' + y^2 = \sin x\): Orden 1, No Lineal. \quad \((y')^3 + y = x\): Orden 1, No Lineal.</span></div>
+    <div class="example-block mt reveal"><span class="b-title">Ejercicio 2:</span> <span>\(y = 2e^{3x} \to y' = 6e^{3x} = 3(2e^{3x}) = 3y\). Satisface \(y' - 3y = 0\). <strong>Sí es solución.</strong></span></div>
+    <div class="example-block mt reveal"><span class="b-title">Ejercicio 3:</span> <span>\(y = -2x^2 + C\). Con \(y(0)=5 \to 5 = 0 + C \implies C=5\). <strong>Solución:</strong> \(y = -2x^2 + 5\).</span></div>
+    <div class="example-block mt reveal"><span class="b-title">Ejercicio 4:</span> <span>EDO: \(\frac{dT}{dt} = -k(T - T_m)\), donde \(k>0\) es constante de enfriamiento y \(T_m\) es temperatura ambiente.</span></div>
+  </div>
+
+  <!-- SLIDE 9: PASO A PASO EJ 1 -->
+  <div class="slide" data-slide="9">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 1</h2>
+    <ol class="mt">
+      <li class="reveal"><strong>\(y'' + y = 0\):</strong> La derivada más alta es \(y''\) (2ª orden). \(y\) aparece a la potencia 1 y sin productos/funciones trascendentes. \(\to\) <span style="color:var(--green)">Orden 2, Lineal.</span></li>
+      <li class="reveal"><strong>\(\frac{dy}{dx} + y^2 = \sin x\):</strong> Derivada más alta: \(y'\) (1er orden). Contiene \(y^2\) (potencia 2). \(\to\) <span style="color:var(--orange)">Orden 1, No Lineal.</span></li>
+      <li class="reveal"><strong>\(\left(\frac{dy}{dx}\right)^3 + y = x\):</strong> Derivada más alta: \(y'\) (1er orden). La derivada está elevada al cubo. \(\to\) <span style="color:var(--orange)">Orden 1, No Lineal.</span></li>
+    </ol>
+    <div class="block mt reveal"><span class="b-title">Regla de oro:</span> La linealidad depende exclusivamente de cómo aparece \(y\) y sus derivadas, no de \(x\) ni de funciones de \(x\).</div>
+  </div>
+
+  <!-- SLIDE 10: PASO A PASO EJ 2 -->
+  <div class="slide" data-slide="10">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 2</h2>
+    <div class="block reveal"><span class="b-title">Verificar si \(y = 2e^{3x}\) satisface \(y' - 3y = 0\)</span></div>
+    <ol class="mt">
+      <li class="reveal"><strong>Paso 1: Derivar la función propuesta.</strong><br>\(y = 2e^{3x} \implies y' = \frac{d}{dx}(2e^{3x}) = 2 \cdot 3e^{3x} = 6e^{3x}\)</li>
+      <li class="reveal"><strong>Paso 2: Sustituir \(y\) y \(y'\) en la EDO.</strong><br>\(y' - 3y = 6e^{3x} - 3(2e^{3x})\)</li>
+      <li class="reveal"><strong>Paso 3: Simplificar.</strong><br>\(6e^{3x} - 6e^{3x} = 0\)</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Resultado:</span> <span>La igualdad \(0=0\) se cumple para todo \(x\). Por lo tanto, <strong>sí es solución</strong>.</span></div>
+  </div>
+
+  <!-- SLIDE 11: PASO A PASO EJ 3 -->
+  <div class="slide" data-slide="11">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 3</h2>
+    <div class="block reveal"><span class="b-title">PVI: \(y' = -4x\), condición \(y(0)=5\)</span></div>
+    <ol class="mt">
+      <li class="reveal"><strong>Paso 1: Integrar para hallar la solución general.</strong><br>\(y(x) = \int -4x \, dx = -2x^2 + C\)</li>
+      <li class="reveal"><strong>Paso 2: Aplicar la condición inicial \(y(0)=5\).</strong><br>Sustituir \(x=0, y=5\) en la general: \(5 = -2(0)^2 + C\)</li>
+      <li class="reveal"><strong>Paso 3: Despejar \(C\).</strong><br>\(5 = 0 + C \implies C = 5\)</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Solución Particular Final:</span> $$y(x) = -2x^2 + 5$$</div>
+  </div>
+
+  <!-- SLIDE 12: PASO A PASO EJ 4 -->
+  <div class="slide" data-slide="12">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 4</h2>
+    <div class="block reveal"><span class="b-title">Modelar la Ley de Enfriamiento de Newton</span></div>
+    <ol class="mt">
+      <li class="reveal"><strong>Identificar variables:</strong> Temperatura del objeto: \(T(t)\). Temperatura ambiente: \(T_m\) (constante).</li>
+      <li class="reveal"><strong>Traducir "tasa de cambio":</strong> \(\frac{dT}{dt}\)</li>
+      <li class="reveal"><strong>Traducir "proporcional a la diferencia":</strong> \(\propto (T - T_m)\)</li>
+      <li class="reveal"><strong>Introducir constante de proporcionalidad \(k\):</strong> Como el objeto se enfría si \(T > T_m\), la tasa debe ser negativa. Por eso se usa \(-k\) con \(k>0\).</li>
+    </ol>
+    <div class="alert-block mt reveal"><span class="b-title">Ecuación Diferencial Resultante:</span> $$\frac{dT}{dt} = -k(T - T_m), \quad k > 0$$ <em>(Esta es una EDO lineal de primer orden con variables separables).</em></div>
+  </div>
+
+  <!-- SLIDE 13: CASO INDUSTRIAL -->
+  <div class="slide" data-slide="13">
+    <h2><i class="fas fa-warehouse"></i> Caso de Estudio Industrial (Logística)</h2>
+    <div class="block reveal"><span class="b-title"><i class="fas fa-boxes-packing"></i> Título: Ajuste de Modelos de Inventario Dinámico</span></div>
+    <p class="reveal"><strong>Contexto:</strong> Un almacén gestiona un producto perecedero. La tasa de cambio del inventario \(I(t)\) es constante por salida fija, pero hay incertidumbre en la medición inicial.</p>
+    <div class="alert-block mt reveal"><span class="b-title">Modelo Matemático:</span> $$\frac{dI}{dt} = -50 \text{ unidades/día}$$</div>
+    <p class="mt reveal"><strong>Problema:</strong> Contador dice 200 uds en día 0. Sistema de seguridad marca 0 uds el día 4. ¿Era correcta la medición inicial? ¿Cuál era el inventario real en \(t=0\)?</p>
+    <ol class="mt">
+      <li class="reveal">Integrar: \(I(t) = \int -50 \, dt = -50t + C\)</li>
+      <li class="reveal">Usar dato real: \(I(4) = 0 \implies 0 = -50(4) + C \implies C = 200\)</li>
+      <li class="reveal">Conclusión: \(I(0) = -50(0) + 200 = 200\).</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Veredicto:</span> La medición del contador era correcta. Si el sistema marcara 0 uds el día 3, entonces \(C=150\), indicando un robo o error de 50 uds iniciales.</div>
+  </div>
+
+  <!-- SLIDE 14: CÓDIGO MATLAB -->
+  <div class="slide" data-slide="14">
+    <h2><i class="fas fa-laptop-code"></i> Código MATLAB - Verificación Simbólica</h2>
+    <div class="block reveal"><span class="b-title">Uso de MATLAB para verificar soluciones automáticamente.</span></div>
+    <pre class="reveal"><span class="mc">% Verificación de EDO con Toolbox Simbólico</span>
+<span class="mk">syms</span> <span class="mv">x</span> <span class="mf">y</span>(x) <span class="mv">C</span>
+
+<span class="mc">% 1. Definir la ecuacion diferencial</span>
+<span class="mc">% Ejemplo: y' - 3y = 0</span>
+<span class="mv">ode</span> = <span class="mf">diff</span>(y, x) - <span class="mn">3</span>*y == <span class="mn">0</span>;
+
+<span class="mc">% 2. Proponer una solucion</span>
+<span class="mv">sol_propuesta</span> = <span class="mn">2</span>*<span class="mf">exp</span>(<span class="mn">3</span>*x);
+
+<span class="mc">% 3. Sustituir y verificar</span>
+<span class="mc">% Reemplazamos y por la solucion en el lado izquierdo</span>
+<span class="mv">LHS</span> = <span class="mf">subs</span>(lhs(ode), y, sol_propuesta);
+<span class="mv">RHS</span> = rhs(ode);
+
+<span class="mk">disp</span>(<span class="ms">'Es solucion?'</span>);
+<span class="mk">disp</span>(LHS == RHS); <span class="mc">% Debe devolver 1 (True)</span></pre>
+    <div class="example-block mt reveal"><span class="b-title"><i class="fas fa-play-circle"></i> Tip:</span> <span>Usar <code>dsolve</code> resuelve automáticamente: <code>dsolve(ode)</code> devuelve <code>C1*exp(3*x)</code>.</span></div>
+  </div>
+
+  <!-- SLIDE 15: CIERRE -->
+  <div class="slide" data-slide="15">
+    <h2><i class="fas fa-flag-checkered"></i> Cierre Conceptual</h2>
+    <p class="bold reveal">Resumen de la Clase:</p>
+    <ul class="mt">
+      <li class="reveal">Una ED modela <strong>cambios</strong> y tasas de variación.</li>
+      <li class="reveal">El <strong>orden</strong> define la complejidad de la dinámica.</li>
+      <li class="reveal">La <strong>Solución General</strong> describe familias de comportamientos.</li>
+      <li class="reveal">Las <strong>Condiciones Iniciales</strong> anclan el modelo a la realidad específica.</li>
+    </ul>
+    <div class="example-block mt reveal">
+      <span class="b-title"><i class="fas fa-calendar-alt"></i> Próxima Clase</span>
+      <span><strong>Clase 23:</strong> Variables Separables.<br>
+      <strong>Preparación:</strong> Repasar integración básica y regla de la cadena. Traer calculadora.</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVIGATION -->
+<nav id="nav-controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+  <span id="slide-counter">1 / 16</span>
+  <button class="nav-btn" id="nextBtn" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+</nav>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let currentStep = 0;
+
+  const counterEl = document.getElementById('slide-counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressBar = document.getElementById('progress-bar');
+
+  // Precompute reveal elements per slide
+  const slideReveals = [];
+  slides.forEach(slide => {
+    slideReveals.push(Array.from(slide.querySelectorAll('.reveal')));
+  });
+
+  function getMaxSteps(idx) { return slideReveals[idx].length; }
+
+  function updateDisplay() {
+    // Slide transition
+    slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+
+    // Reveal elements in current slide
+    const reveals = slideReveals[currentSlide];
+    reveals.forEach((el, i) => el.classList.toggle('visible', i < currentStep));
+
+    // UI updates
+    counterEl.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+    prevBtn.disabled = (currentSlide === 0 && currentStep === 0);
+    nextBtn.disabled = (currentSlide === totalSlides - 1 && currentStep >= getMaxSteps(currentSlide));
+  }
+
+  function goNext() {
+    const max = getMaxSteps(currentSlide);
+    if (currentStep < max) {
+      currentStep++;
+    } else if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      currentStep = 0;
+    }
+    updateDisplay();
+  }
+
+  function goPrev() {
+    if (currentStep > 0) {
+      currentStep--;
+    } else if (currentSlide > 0) {
+      currentSlide--;
+      currentStep = getMaxSteps(currentSlide);
+      // Ensure all reveals are visible when going back to prev slide
+      slideReveals[currentSlide].forEach(el => el.classList.add('visible'));
+    }
+    updateDisplay();
+  }
+
+  nextBtn.addEventListener('click', goNext);
+  prevBtn.addEventListener('click', goPrev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); goNext(); }
+    if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); goPrev(); }
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive: true});
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) diff > 0 ? goNext() : goPrev();
+  }, {passive: true});
+
+  // Init
+  updateDisplay();
+})();
+</script>
+</body>
+</html>

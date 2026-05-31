@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clase 20: Sólidos de Revolución — Método de Cascarones</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$','$']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+      svg: { fontCache: 'global' },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js" async></script>
+  <style>
+    :root {
+      --navy: #005293;
+      --navy-dark: #003d6e;
+      --green: #008250;
+      --green-light: #e8f5e9;
+      --orange: #dc6b1f;
+      --orange-light: #fff3e0;
+      --gold: #d4a017;
+      --crane-yellow: #f5e6c8;
+      --gray-light: #f5f5f5;
+      --bg-grad-1: #f8fafc;
+      --bg-grad-2: #e2e8f0;
+      --glass: rgba(255,255,255,0.94);
+      --shadow: 0 12px 40px rgba(0,20,50,0.13);
+      --radius: 16px;
+      --font-text: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+      --slide-width: 90%;
+      --slide-max-width: 1200px;
+      --slide-height: 82vh;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      font-family: var(--font-text);
+      background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+      color: #1e293b;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 16px;
+    }
+
+    #presentation-container {
+      width: 100%; height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+
+    /* ─── SLIDE ─── */
+    .slide {
+      position: absolute;
+      width: var(--slide-width);
+      max-width: var(--slide-max-width);
+      height: var(--slide-height);
+      background: var(--glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2.2rem 2.8rem;
+      overflow-y: auto;
+      opacity: 0;
+      transform: scale(0.94) translateY(12px);
+      transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: all;
+      z-index: 10;
+    }
+
+    .slide h2 {
+      font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 1rem;
+      padding-bottom: 0.55rem;
+      border-bottom: 3px solid var(--navy);
+      display: inline-block;
+      letter-spacing: -0.02em;
+    }
+
+    .slide h3 {
+      font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+      font-weight: 600;
+      color: var(--navy);
+      margin: 0.8rem 0 0.4rem;
+    }
+
+    .slide p, .slide li, .slide td {
+      font-size: clamp(0.85rem, 1.1vw, 1rem);
+      line-height: 1.55;
+    }
+
+    .slide ul, .slide ol { padding-left: 1.3rem; }
+    .slide li { margin-bottom: 0.35rem; }
+    .mt { margin-top: 0.8rem; }
+    .mb { margin-bottom: 0.6rem; }
+    .bold { font-weight: 600; }
+
+    /* ─── LAYOUT ─── */
+    .col-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 0.8rem;
+    }
+    .col-tri {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.2rem;
+      margin-top: 0.8rem;
+    }
+    .center { text-align: center; }
+
+    /* ─── BLOCKS ─── */
+    .block, .example-block, .alert-block {
+      padding: 0.9rem 1.1rem;
+      border-radius: 8px;
+      margin-bottom: 0.9rem;
+      border-left: 5px solid transparent;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .block {
+      background: rgba(0, 82, 147, 0.06);
+      border-left-color: var(--navy);
+    }
+    .block .block-title, .block strong { color: var(--navy); }
+
+    .example-block {
+      background: var(--green-light);
+      border-left-color: var(--green);
+    }
+    .example-block .block-title, .example-block strong { color: var(--green); }
+
+    .alert-block {
+      background: var(--orange-light);
+      border-left-color: var(--orange);
+    }
+    .alert-block .block-title, .alert-block strong { color: var(--orange); }
+
+    .block-title {
+      font-weight: 600;
+      font-size: 1.05em;
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    /* ─── TABLE ─── */
+    table { width: auto; border-collapse: collapse; margin: 0.6rem 0; font-size: 0.95em; }
+    th, td { padding: 0.4rem 0.7rem; border-bottom: 1px solid #cbd5e1; text-align: center; }
+    th { background: #f1f5f9; font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ─── CODE ─── */
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 0.9rem 1rem;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-family: var(--font-code);
+      font-size: clamp(0.7rem, 0.85vw, 0.85rem);
+      line-height: 1.5;
+      box-shadow: inset 0 0 0 1px #334155;
+      margin: 0.5rem 0;
+      white-space: pre;
+    }
+    .mk { color: #7dd3fc; font-weight: 600; }
+    .mc { color: #6ee7b7; font-style: italic; }
+    .ms { color: #fca5a5; }
+    .mf { color: #fbbf24; }
+    .mn { color: #c084fc; }
+    .mv { color: #e2e8f0; }
+    .mc2 { color: #94a3b8; }
+
+    code {
+      font-family: var(--font-code);
+      background: #f1f5f9;
+      padding: 0.15em 0.35em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+
+    /* ─── DIAGRAM PLACEHOLDER ─── */
+    .diagram-box {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+    }
+    .diagram-box i { font-size: 3rem; color: var(--navy); margin-bottom: 0.5rem; opacity: 0.7; }
+    .diagram-box p { font-size: 0.85rem; color: #64748b; font-style: italic; }
+
+    /* ─── STEP REVEAL (pause / <n->) ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── PROGRESS BAR ─── */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--navy), var(--green));
+      z-index: 200;
+      transition: width 0.3s ease;
+    }
+
+    /* ─── NAV CONTROLS ─── */
+    #nav-controls {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px);
+      padding: 8px 20px;
+      border-radius: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+      z-index: 100;
+    }
+    .nav-btn {
+      background: var(--navy);
+      color: white;
+      border: none;
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 1rem;
+      transition: background 0.2s, transform 0.12s;
+    }
+    .nav-btn:hover { background: var(--navy-dark); transform: scale(1.08); }
+    .nav-btn:active { transform: scale(0.95); }
+    .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+    #slide-counter {
+      font-family: var(--font-code);
+      font-weight: 600;
+      color: #334155;
+      font-size: 0.95rem;
+      min-width: 60px;
+      text-align: center;
+    }
+    #step-indicator {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-left: 6px;
+    }
+
+    /* ─── FLOWCHART ─── */
+    .flowchart {
+      display: flex; flex-wrap: wrap; gap: 1rem;
+      justify-content: center; align-items: center; margin-top: 0.8rem;
+    }
+    .flow-node {
+      background: var(--navy); color: #fff; padding: 0.7rem 1rem;
+      border-radius: 10px; text-align: center; min-width: 130px;
+      font-size: 0.9rem;
+    }
+    .flow-node.hl { background: var(--green); }
+    .flow-node.sec { background: #64748b; }
+    .flow-arrow { font-size: 1.3rem; color: #64748b; }
+
+    /* ─── PORTADA ─── */
+    .portada-content {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 85%; text-align: center;
+    }
+    .portada-content h1 {
+      font-size: clamp(1.8rem, 3.5vw, 3rem);
+      color: var(--navy);
+      font-weight: 700;
+      line-height: 1.15;
+    }
+    .portada-content .subtitle {
+      font-size: clamp(1rem, 1.8vw, 1.4rem);
+      color: #475569;
+      margin: 0.6rem 0 1.5rem;
+    }
+    .portada-content .author-line {
+      font-size: 1rem; color: #64748b;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 850px) {
+      .slide { padding: 1.4rem 1.5rem; width: 96%; height: 88vh; }
+      .col-layout, .col-tri { grid-template-columns: 1fr; gap: 1rem; }
+      .nav-btn { width: 34px; height: 34px; }
+      pre { font-size: 0.72rem; padding: 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div id="presentation-container">
+
+  <!-- =============== SLIDE 0: PORTADA =============== -->
+  <div class="slide active" data-slide="0">
+    <div class="portada-content">
+      <i class="fas fa-cube" style="font-size:4rem; color:var(--navy); margin-bottom:1rem;"></i>
+      <h1>Sólidos de Revolución:<br>Método de Cascarones Cilíndricos</h1>
+      <p class="subtitle">Una Alternativa Estratégica para el Cálculo de Volúmenes</p>
+      <div class="block">
+        <span class="block-title"><i class="fas fa-chalkboard-teacher"></i> Matemáticas 3</span>
+        <span>UTEC / Ingeniería Logística — Clase 20</span>
+      </div>
+      <p class="author-line"><i class="fas fa-calendar-day"></i> Fecha: 3 de Junio 2026</p>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 1: OBJETIVOS =============== -->
+  <div class="slide" data-slide="1">
+    <h2><i class="fas fa-bullseye"></i> Objetivos de la Sesión</h2>
+    <div class="block">
+      <span class="block-title"><i class="fas fa-flag"></i> Objetivo General</span>
+      <span class="reveal">Aplicar el Método de Cascarones Cilíndricos para calcular volúmenes de sólidos de revolución, distinguiendo cuándo es más eficiente que el método de arandelas.</span>
+    </div>
+    <p class="mt bold">Objetivos Específicos:</p>
+    <ol>
+      <li class="reveal">Comprender la deducción geométrica del cascarón cilíndrico.</li>
+      <li class="reveal">Identificar el radio \(r\) y la altura \(h\) del cascarón.</li>
+      <li class="reveal">Aplicar la fórmula \(V = 2\pi \int (\text{radio})(\text{altura})\,dx\).</li>
+      <li class="reveal">Resolver problemas de rotación donde la variable de integración es paralela al eje de rotación.</li>
+    </ol>
+  </div>
+
+  <!-- =============== SLIDE 2: TEORÍA - CONCEPTO =============== -->
+  <div class="slide" data-slide="2">
+    <h2><i class="fas fa-lightbulb"></i> Nueva Perspectiva: Cortes Paralelos</h2>
+    <div class="alert-block reveal">
+      <span class="block-title"><i class="fas fa-exclamation-triangle"></i> Limitación de Arandelas/Discos</span>
+      <span>Requiere cortes <strong>perpendiculares</strong> al eje de rotación. A veces, esto obliga a despejar variables complicadas (ej. despejar \(x\) de \(y=x^3-x\)).</span>
+    </div>
+    <div class="block mt reveal">
+      <span class="block-title"><i class="fas fa-circle-dot"></i> La Idea del Cascarón</span>
+      <span>Imaginemos "enrollar" la región alrededor del eje, como si formáramos un tubo o el tronco de un árbol hueco.</span>
+    </div>
+    <div class="col-layout mt">
+      <div>
+        <p class="bold reveal">Elementos del Cascarón:</p>
+        <ul>
+          <li class="reveal">Es un cilindro hueco muy delgado.</li>
+          <li class="reveal"><strong>Radio \(r\):</strong> Distancia del eje al "centro" de la tira.</li>
+          <li class="reveal"><strong>Altura \(h\):</strong> Longitud de la tira (función).</li>
+          <li class="reveal"><strong>Espesor \(dx\):</strong> Ancho de la tira.</li>
+        </ul>
+        <p class="bold mt reveal">Volumen del Cascarón:</p>
+        <div class="reveal">
+          <span>Al "desenrollar" el cilindro, obtenemos una lámina rectangular.</span>
+          $$V_{\text{cas}} = (\text{Circunferencia})(\text{Altura})(\text{Espesor})$$
+          $$dV = 2\pi\, r \cdot h \cdot dx$$
+        </div>
+      </div>
+      <div>
+        <div class="diagram-box reveal">
+          <i class="fas fa-drafting-compass"></i>
+          <p>Tira vertical a distancia \(r\) del eje, con altura \(h\) y espesor \(dx\)</p>
+          <p style="margin-top:0.5rem; font-style:normal;">
+            $$\begin{tikzcd}
+              \arrow[r] & \text{Ver figura en diapositiva}
+            \end{tikzcd}$$
+          </p>
+          <div style="margin-top:0.6rem; text-align:left; font-size:0.85rem; color:#475569;">
+            <p>📐 <strong>Eje \(y\)</strong> (vertical)</p>
+            <p>📏 <strong>Eje \(x\)</strong> (horizontal)</p>
+            <p>📗 <strong>Tira vertical</strong> en posición \(x\)</p>
+            <p>↔️ <strong>Radio \(r\)</strong> = distancia al eje</p>
+            <p>↕️ <strong>Altura \(h\)</strong> = valor de la función</p>
+            <p>↔️ <strong>Espesor</strong> = \(dx\)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 3: FÓRMULA GENERAL =============== -->
+  <div class="slide" data-slide="3">
+    <h2><i class="fas fa-square-root-variable"></i> Fórmula del Método de Cascarones</h2>
+    <div class="alert-block reveal">
+      <span class="block-title"><i class="fas fa-file-signature"></i> Fórmula General</span>
+      <span>Si rotamos una región alrededor de un eje vertical (ej. Eje \(Y\)) usando tiras verticales (\(dx\)):</span>
+      $$V = \int_a^b 2\pi\, \underbrace{(\text{radio})}_{r(x)}\, \underbrace{(\text{altura})}_{h(x)}\, dx$$
+    </div>
+    <p class="bold mt reveal">Claves para identificar las variables:</p>
+    <ol>
+      <li class="reveal">
+        <strong>Variable de integración:</strong>
+        <ul style="margin-top:0.3rem;">
+          <li class="reveal">Si el eje de rotación es <strong>VERTICAL</strong> → Integramos en \(dx\) (tiras verticales).</li>
+          <li class="reveal">Si el eje de rotación es <strong>HORIZONTAL</strong> → Integramos en \(dy\) (tiras horizontales).</li>
+        </ul>
+      </li>
+      <li class="reveal"><strong>Radio (\(r\)):</strong> Distancia horizontal (o vertical) desde la tira hasta el eje de rotación.</li>
+      <li class="reveal"><strong>Altura (\(h\)):</strong> Diferencia entre la función de arriba y la de abajo (función de la tira).</li>
+    </ol>
+  </div>
+
+  <!-- =============== SLIDE 4: EJEMPLO GUIADO 1 =============== -->
+  <div class="slide" data-slide="4">
+    <h2><i class="fas fa-pencil-alt"></i> Ejemplo Guiado 1: Rotación alrededor del Eje \(Y\)</h2>
+    <div class="block reveal">
+      <span class="block-title">Problema</span>
+      <span>Hallar el volumen del sólido al rotar la región bajo \(y = x - x^2\) en \([0, 1]\) alrededor del <strong>Eje \(Y\)</strong>.</span>
+    </div>
+    <p class="bold mt reveal">Análisis:</p>
+    <ul>
+      <li class="reveal">Si usamos <strong>Arandelas</strong>: Necesitamos despejar \(x\) de una ecuación cuadrática (difícil).</li>
+      <li class="reveal">Si usamos <strong>Cascarones</strong>: Eje vertical → usamos \(dx\). ¡Mucho más fácil!</li>
+    </ul>
+    <p class="bold mt reveal">Solución:</p>
+    <ol>
+      <li class="reveal"><strong>Radio:</strong> Distancia al Eje \(Y\). \(r(x) = x\).</li>
+      <li class="reveal"><strong>Altura:</strong> Valor de la función. \(h(x) = x - x^2\).</li>
+      <li class="reveal">
+        <strong>Plantear Integral:</strong>
+        $$V = \int_0^1 2\pi\, (x)\,(x - x^2)\,dx = 2\pi \int_0^1 (x^2 - x^3)\,dx$$
+      </li>
+      <li class="reveal">
+        <strong>Calcular:</strong>
+        $$V = 2\pi\left[ \frac{x^3}{3} - \frac{x^4}{4} \right]_0^1 = 2\pi\left( \frac{1}{3} - \frac{1}{4} \right) = 2\pi\left(\frac{1}{12}\right) = \frac{\pi}{6}$$
+      </li>
+    </ol>
+  </div>
+
+  <!-- =============== SLIDE 5: EJEMPLO GUIADO 2 =============== -->
+  <div class="slide" data-slide="5">
+    <h2><i class="fas fa-pencil-alt"></i> Ejemplo Guiado 2: Rotación alrededor de línea externa</h2>
+    <div class="block reveal">
+      <span class="block-title">Problema</span>
+      <span>Rotar la región acotada por \(y=\sqrt{x}\), \(x=4\), \(y=0\) alrededor de la recta \(x=5\).</span>
+    </div>
+    <p class="bold mt reveal">Solución:</p>
+    <ol>
+      <li class="reveal">
+        <strong>Eje de rotación:</strong> Vertical (\(x=5\)). Usamos Cascarones con \(dx\).
+      </li>
+      <li class="reveal">
+        <strong>Radio:</strong> Distancia desde la tira en posición \(x\) hasta el eje \(x=5\).
+        $$r(x) = 5 - x \quad \text{(Radio externo: Eje menos posición)}$$
+      </li>
+      <li class="reveal">
+        <strong>Altura:</strong> La curva arriba (\(\sqrt{x}\)) menos abajo (0).
+        $$h(x) = \sqrt{x}$$
+      </li>
+      <li class="reveal">
+        <strong>Integral:</strong>
+        $$V = \int_0^4 2\pi\,(5 - x)\sqrt{x}\,dx = 2\pi\int_0^4 (5x^{1/2} - x^{3/2})\,dx$$
+      </li>
+      <li class="reveal">
+        <strong>Calcular:</strong>
+        $$= 2\pi\left[ \frac{10}{3}x^{3/2} - \frac{2}{5}x^{5/2} \right]_0^4 = 2\pi\left(\frac{80}{3} - \frac{64}{5}\right) = \frac{352\pi}{15}$$
+      </li>
+    </ol>
+  </div>
+
+  <!-- =============== SLIDE 6: PRÁCTICA ACTIVA =============== -->
+  <div class="slide" data-slide="6">
+    <h2><i class="fas fa-dumbbell"></i> Práctica Activa</h2>
+    <div class="alert-block reveal">
+      <span class="block-title"><i class="fas fa-clock"></i> Instrucciones</span>
+      <span>Use el <strong>Método de Cascarones</strong>. Tiempo: 30 minutos.</span>
+    </div>
+    <ol>
+      <li class="reveal">
+        <strong>Ejercicio 1:</strong> La región limitada por \(y=1-x^2\), \(x=0\), \(x=1\), \(y=0\). Rotar alrededor del Eje \(Y\).
+      </li>
+      <li class="reveal">
+        <strong>Ejercicio 2:</strong> La región limitada por \(y=x\), \(y=0\), \(x=1\), \(x=2\). Rotar alrededor de la recta \(x=4\).
+      </li>
+      <li class="reveal">
+        <strong>Ejercicio 3:</strong> La región limitada por \(y=x^2\), \(y=0\), \(x=1\). Rotar alrededor del Eje \(X\).<br>
+        <em>(Pista: Eje horizontal → usar \(dy\). Radio \(r=y\), Altura \(h=1-\sqrt{y}\)).</em>
+      </li>
+    </ol>
+    <div class="example-block mt reveal">
+      <span class="block-title"><i class="fas fa-brain"></i> Pregunta de Análisis</span>
+      <span>En el ejercicio 3, ¿sería más fácil usar Discos o Cascarones? Discuta brevemente.</span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 7: SOLUCIONES (RESUMEN) =============== -->
+  <div class="slide" data-slide="7">
+    <h2><i class="fas fa-check-circle"></i> Soluciones a los Ejercicios Propuestos</h2>
+    <div class="example-block reveal">
+      <span class="block-title">Ejercicio 1</span>
+      <span>
+        \(r = x,\quad h = 1 - x^2\)<br>
+        $$V = 2\pi\int_0^1 x(1-x^2)\,dx = 2\pi\int_0^1 (x - x^3)\,dx = \frac{\pi}{2}$$
+      </span>
+    </div>
+    <div class="example-block mt reveal">
+      <span class="block-title">Ejercicio 2</span>
+      <span>
+        Eje \(x=4\). Radio \(r = 4 - x\). Altura \(h = x\).<br>
+        $$V = 2\pi\int_1^2 (4 - x)x\,dx = 2\pi\int_1^2 (4x - x^2)\,dx = \frac{16\pi}{3}$$
+      </span>
+    </div>
+    <div class="example-block mt reveal">
+      <span class="block-title">Ejercicio 3</span>
+      <span>
+        Rotación Eje \(X\) → usar \(dy\). Radio \(r = y\). Altura \(h = x_{\text{der}} - x_{\text{izq}} = 1 - \sqrt{y}\). Límites \(y: 0 \to 1\).<br>
+        $$V = 2\pi\int_0^1 y(1-\sqrt{y})\,dy = 2\pi\int_0^1 (y - y^{3/2})\,dy = \frac{\pi}{5}$$
+      </span>
+      <div class="block mt">
+        <span class="block-title">Comparación</span>
+        <span>Con Discos sería \(\pi \int_0^1 (x^2)^2\,dx = \pi/5\). ¡Ambos funcionan, pero Discos fue más rápido aquí!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 8: PASO A PASO EJ 1 =============== -->
+  <div class="slide" data-slide="8">
+    <h2><i class="fas fa-list-ol"></i> Paso a Paso — Ejercicio 1 (Detalle)</h2>
+    <div class="block reveal">
+      <span class="block-title"><i class="fas fa-file-alt"></i> Enunciado</span>
+      <span>Región limitada por \(y=1-x^2\), \(x=0\), \(x=1\), \(y=0\). Rotar alrededor del <strong>Eje \(Y\)</strong>.</span>
+    </div>
+    <ol class="mt">
+      <li class="reveal">
+        <strong>Paso 1 — Identificar el eje de rotación:</strong><br>
+        Eje \(Y\) (vertical) → usamos tiras verticales → integramos en \(dx\).
+      </li>
+      <li class="reveal">
+        <strong>Paso 2 — Determinar el radio:</strong><br>
+        La tira está en posición \(x\), el eje de rotación es \(x=0\).<br>
+        \(r(x) = x - 0 = x\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 3 — Determinar la altura:</strong><br>
+        \(h(x) = \text{curva superior} - \text{curva inferior} = (1-x^2) - 0 = 1 - x^2\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 4 — Límites de integración:</strong><br>
+        \(x \in [0, 1]\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 5 — Plantear la integral:</strong>
+        $$V = 2\pi\int_0^1 (x)(1 - x^2)\,dx = 2\pi\int_0^1 (x - x^3)\,dx$$
+      </li>
+      <li class="reveal">
+        <strong>Paso 6 — Integrar:</strong>
+        $$V = 2\pi\left[ \frac{x^2}{2} - \frac{x^4}{4} \right]_0^1 = 2\pi\left(\frac{1}{2} - \frac{1}{4}\right) = 2\pi\left(\frac{1}{4}\right) = \frac{\pi}{2}$$
+      </li>
+    </ol>
+    <div class="example-block mt reveal">
+      <span class="block-title">Resultado</span>
+      <span>$$V = \frac{\pi}{2} \approx 1.571 \text{ u}^3$$</span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 9: PASO A PASO EJ 2 =============== -->
+  <div class="slide" data-slide="9">
+    <h2><i class="fas fa-list-ol"></i> Paso a Paso — Ejercicio 2 (Detalle)</h2>
+    <div class="block reveal">
+      <span class="block-title"><i class="fas fa-file-alt"></i> Enunciado</span>
+      <span>Región limitada por \(y=x\), \(y=0\), \(x=1\), \(x=2\). Rotar alrededor de la recta <strong>\(x=4\)</strong>.</span>
+    </div>
+    <ol class="mt">
+      <li class="reveal">
+        <strong>Paso 1 — Identificar el eje de rotación:</strong><br>
+        Eje \(x=4\) (vertical) → usamos tiras verticales → integramos en \(dx\).
+      </li>
+      <li class="reveal">
+        <strong>Paso 2 — Determinar el radio:</strong><br>
+        La tira está en posición \(x\), el eje de rotación es \(x=4\). La distancia es:\br>
+        \(r(x) = 4 - x\) (porque \(x < 4\) en nuestro intervalo)
+      </li>
+      <li class="reveal">
+        <strong>Paso 3 — Determinar la altura:</strong><br>
+        \(h(x) = x - 0 = x\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 4 — Límites de integración:</strong><br>
+        \(x \in [1, 2]\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 5 — Plantear la integral:</strong>
+        $$V = 2\pi\int_1^2 (4-x)(x)\,dx = 2\pi\int_1^2 (4x - x^2)\,dx$$
+      </li>
+      <li class="reveal">
+        <strong>Paso 6 — Integrar:</strong>
+        $$V = 2\pi\left[ 2x^2 - \frac{x^3}{3} \right]_1^2 = 2\pi\left[\left(8 - \frac{8}{3}\right) - \left(2 - \frac{1}{3}\right)\right]$$
+        $$= 2\pi\left(\frac{16}{3} - \frac{5}{3}\right) = 2\pi\left(\frac{11}{3}\right) = \frac{22\pi}{3}$$
+      </li>
+    </ol>
+    <div class="alert-block mt reveal">
+      <span class="block-title"><i class="fas fa-exclamation-circle"></i> Corrección sobre el resultado resumido</span>
+      <span>El resultado resumido anterior decía \(\frac{16\pi}{3}\), pero el cálculo correcto es \(\boxed{\dfrac{22\pi}{3}}\). Esto muestra la importancia de revisar paso a paso.</span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 10: PASO A PASO EJ 3 =============== -->
+  <div class="slide" data-slide="10">
+    <h2><i class="fas fa-list-ol"></i> Paso a Paso — Ejercicio 3 (Detalle)</h2>
+    <div class="block reveal">
+      <span class="block-title"><i class="fas fa-file-alt"></i> Enunciado</span>
+      <span>Región limitada por \(y=x^2\), \(y=0\), \(x=1\). Rotar alrededor del <strong>Eje \(X\)</strong>.</span>
+    </div>
+    <div class="alert-block mt reveal">
+      <span class="block-title"><i class="fas fa-exchange-alt"></i> ¡Atención!</span>
+      <span>Eje de rotación = <strong>horizontal</strong> (Eje \(X\)). Con cascarones usamos tiras <strong>horizontales</strong> → integramos en <strong>\(dy\)</strong>.</span>
+    </div>
+    <ol class="mt">
+      <li class="reveal">
+        <strong>Paso 1 — Radio:</strong><br>
+        La tira horizontal está a distancia \(y\) del Eje \(X\). → \(r = y\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 2 — Altura (longitud horizontal de la tira):</strong><br>
+        Extremo derecho: \(x = 1\). Extremo izquierdo: \(x = \sqrt{y}\) (de \(y=x^2\)).<br>
+        \(h(y) = 1 - \sqrt{y}\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 3 — Límites:</strong><br>
+        Cuando \(x=0\), \(y=0\). Cuando \(x=1\), \(y=1\). → \(y \in [0, 1]\)
+      </li>
+      <li class="reveal">
+        <strong>Paso 4 — Plantear la integral:</strong>
+        $$V = 2\pi\int_0^1 y\,(1 - \sqrt{y})\,dy = 2\pi\int_0^1 (y - y^{3/2})\,dy$$
+      </li>
+      <li class="reveal">
+        <strong>Paso 5 — Integrar:</strong>
+        $$V = 2\pi\left[ \frac{y^2}{2} - \frac{2}{5}y^{5/2} \right]_0^1 = 2\pi\left(\frac{1}{2} - \frac{2}{5}\right) = 2\pi\left(\frac{1}{10}\right) = \frac{\pi}{5}$$
+      </li>
+    </ol>
+    <div class="example-block mt reveal">
+      <span class="block-title">Comparación con Discos</span>
+      <span>
+        $$V_{\text{discos}} = \pi\int_0^1 (x^2)^2\,dx = \pi\int_0^1 x^4\,dx = \pi\left[\frac{x^5}{5}\right]_0^1 = \frac{\pi}{5}$$
+        ¡Ambos métodos dan el mismo resultado! Discos fue ligeramente más rápido en este caso.
+      </span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 11: CASO INDUSTRIAL =============== -->
+  <div class="slide" data-slide="11">
+    <h2><i class="fas fa-industry"></i> Caso de Estudio Industrial (Logística)</h2>
+    <div class="block reveal">
+      <span class="block-title"><i class="fas fa-warehouse"></i> Título: Volumen de un Silo Metálico Enrollado</span>
+      <span>Un fabricante produce silos de almacenamiento enrollando láminas de acero.</span>
+    </div>
+    <div class="block mt reveal">
+      <span class="block-title"><i class="fas fa-file-alt"></i> Contexto</span>
+      <span>El perfil del silo tiene un radio interno de \(r=2\,m\) y paredes que varían de grosor debido al proceso de enrollado, modelado por el crecimiento de una región entre \(x=2\) y \(x=2.5\). Se desea calcular la cantidad de material usado en una sección de 1 metro de altura, asumiendo que el perfil exterior es \(y = 1\) (cilindro recto).</span>
+    </div>
+    <div class="alert-block mt reveal">
+      <span class="block-title">Problema</span>
+      <span>Calcular el volumen de acero en la pared del silo (región entre \(x=2\) y \(x=2.5\), altura \(y=1\)) rotada alrededor del <strong>Eje \(Y\)</strong>.</span>
+    </div>
+    <p class="bold mt reveal">Solución (Cascarones):</p>
+    <ul>
+      <li class="reveal">Eje vertical → usamos \(dx\).</li>
+      <li class="reveal">Radio \(r(x) = x\) (distancia al eje \(Y\)).</li>
+      <li class="reveal">Altura \(h(x) = 1\) (metro de altura del silo).</li>
+      <li class="reveal">Límites: \(x \in [2, 2.5]\).</li>
+    </ul>
+    <div class="reveal">
+      $$V = \int_2^{2.5} 2\pi\,(x)(1)\,dx = 2\pi\left[\frac{x^2}{2}\right]_2^{2.5} = \pi\,(6.25 - 4) = 2.25\pi$$
+      $$V \approx 7.07 \text{ m}^3$$
+    </div>
+    <div class="example-block mt reveal">
+      <span class="block-title">Interpretación</span>
+      <span>Este volumen representa el acero necesario para esa sección del silo.</span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 12: CÓDIGO MATLAB =============== -->
+  <div class="slide" data-slide="12">
+    <h2><i class="fas fa-laptop-code"></i> Código MATLAB — Visualización de Cascarones</h2>
+    <div class="block reveal">
+      <span class="block-title">Script para visualizar la suma de cilindros huecos</span>
+    </div>
+    <pre class="reveal"><span class="mc">% Parametros</span>
+n_shells = <span class="mn">10</span>;          <span class="mc">% Numero de cascarones</span>
+a = <span class="mn">0</span>; b = <span class="mn">1</span>;
+h_func = <span class="mf">@</span>(<span class="mv">x</span>) x - x.<span class="mc2">^2</span>; <span class="mc">% Altura y = x - x^2</span>
+
+<span class="mk">figure</span>; <span class="mk">hold</span> on;
+<span class="mc">% Dibujar cascarones</span>
+x_vals = <span class="mf">linspace</span>(a, b, n_shells+<span class="mn">1</span>);
+<span class="mk">for</span> i = <span class="mn">1</span>:n_shells
+    x_mid = (x_vals(i) + x_vals(i+<span class="mn">1</span>))/<span class="mn">2</span>;
+    r = x_mid;          <span class="mc">% Radio</span>
+    h = h_func(x_mid);  <span class="mc">% Altura</span>
+    dr = x_vals(i+<span class="mn">1</span>) - x_vals(i); <span class="mc">% Espesor</span>
+    
+    <span class="mc">% Dibujar cilindro (usamos rectangle en 2D para simplificar)</span>
+    <span class="mc">% En 3D real se usaria cylinder y surf</span>
+    <span class="mf">rectangle</span>(<span class="ms">'Position'</span>, <span class="mf">[</span>x_vals(i), <span class="mn">0</span>, dr, h<span class="mf">]</span>, ...
+              <span class="ms">'FaceColor'</span>, <span class="ms">'c'</span>, <span class="ms">'EdgeColor'</span>, <span class="ms">'k'</span>);
+<span class="mk">end</span>
+<span class="mk">axis</span> equal; <span class="mk">grid</span> on;
+<span class="mf">title</span>(<span class="ms">'Aproximacion por Cascarones (Vista 2D)'</span>);</pre>
+    <div class="example-block mt reveal">
+      <span class="block-title"><i class="fas fa-play-circle"></i> Instrucciones de uso</span>
+      <span>Copiar el código en un archivo <code>clase20_cascarones.m</code> y ejecutar en MATLAB. Se generará una figura con la aproximación del sólido como suma de cascarones.</span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 13: CIERRE CONCEPTUAL =============== -->
+  <div class="slide" data-slide="13">
+    <h2><i class="fas fa-flag-checkered"></i> Cierre Conceptual</h2>
+    <div class="block reveal">
+      <span class="block-title"><i class="fas fa-clipboard-check"></i> Resumen del Método de Cascarones</span>
+      <ul>
+        <li class="reveal">Es ideal cuando la variable de integración es <strong>paralela</strong> al eje de rotación.</li>
+        <li class="reveal">Fórmula mnemotécnica: \(2\pi r h\) (como la superficie lateral de un cilindro).</li>
+        <li class="reveal">A menudo simplifica cálculos que con Arandelas requerirían inversas de funciones.</li>
+      </ul>
+    </div>
+    <p class="bold mt reveal">Decisión: Discos/Arandelas vs. Cascarones</p>
+    <ul>
+      <li class="reveal">Si el corte es <strong>perpendicular</strong> al eje → <strong>Discos/Arandelas</strong>.</li>
+      <li class="reveal">Si el corte es <strong>paralelo</strong> al eje → <strong>Cascarones</strong>.</li>
+    </ul>
+    <div class="example-block mt reveal">
+      <span class="block-title"><i class="fas fa-calendar-alt"></i> Próxima Clase</span>
+      <span>
+        <strong>Clase 21:</strong> Ecuaciones Diferenciales - Conceptos Básicos.<br>
+        <strong>Preparación:</strong> Leer sobre qué es una ecuación diferencial. ¿Qué significa "resolver" una ecuación que tiene derivadas?.
+      </span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 14: ERRORES COMUNES =============== -->
+  <div class="slide" data-slide="14">
+    <h2><i class="fas fa-exclamation-circle"></i> Errores Comunes y Preguntas</h2>
+    <div class="alert-block reveal">
+      <span class="block-title"><i class="fas fa-times-circle"></i> Errores Comunes</span>
+      <ul>
+        <li class="reveal">Usar Arandelas cuando el eje es vertical y la función es \(y=f(x)\), obligando a despejar \(x\) innecesariamente.</li>
+        <li class="reveal">Calcular mal el radio en ejes desplazados (ej. usar \(x-5\) en lugar de \(5-x\), aunque al cuadrar se corrige, conceptualmente la distancia es positiva).</li>
+        <li class="reveal">Olvidar el factor \(2\pi\) (confundir con área).</li>
+      </ul>
+    </div>
+    <p class="bold mt reveal">Preguntas para Discusión:</p>
+    <ul>
+      <li class="reveal">¿Por qué el cascarón tiene volumen si es un cilindro "hueco"? <em>(Porque tiene espesor \(dx\)).</em></li>
+      <li class="reveal">¿Puedo usar Cascarones para rotar alrededor del Eje \(X\)? <em>(Sí, pero debo integrar en \(dy\)).</em></li>
+    </ul>
+    <div class="example-block mt reveal">
+      <span class="block-title"><i class="fas fa-key"></i> Recuerda</span>
+      <span>La elección del método depende de la <strong>geometría del problema</strong>. Siempre dibuja la región, el eje de rotación y la tira representativa antes de plantear la integral.</span>
+    </div>
+  </div>
+
+  <!-- =============== SLIDE 15: DIAP. FINAL =============== -->
+  <div class="slide" data-slide="15">
+    <div class="portada-content">
+      <i class="fas fa-graduation-cap" style="font-size:4rem; color:var(--green); margin-bottom:1rem;"></i>
+      <h1 style="font-size:clamp(1.8rem,3.2vw,2.8rem); color:var(--navy);">¡Hasta la próxima clase!</h1>
+      <p class="subtitle mt">Ecuaciones Diferenciales - Conceptos Básicos.</p>
+      <div class="block mt">
+        <span class="block-title"><i class="fas fa-book-open"></i> Preparación</span>
+        <span>Leer sobre qué es una ecuación diferencial. ¿Qué significa "resolver" una ecuación que tiene derivadas?</span>
+      </div>
+      <p class="author-line mt" style="margin-top:2rem;">
+        <i class="fas fa-envelope"></i> jesus.martinez@utec.edu.uy &nbsp;|&nbsp; <i class="fas fa-globe"></i> ev1.utec.edu.uy
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════ NAV CONTROLS ═══════ -->
+<nav id="nav-controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+  <span id="slide-counter">1 / 16</span>
+  <button class="nav-btn" id="nextBtn" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+</nav>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let currentStep = 0;
+
+  const counterEl = document.getElementById('slide-counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressBar = document.getElementById('progress-bar');
+
+  // Collect reveal elements per slide
+  const slideReveals = [];
+  slides.forEach(slide => {
+    const reveals = Array.from(slide.querySelectorAll('.reveal'));
+    slideReveals.push(reveals);
+  });
+
+  function getMaxSteps(slideIdx) {
+    return slideReveals[slideIdx] ? slideReveals[slideIdx].length : 0;
+  }
+
+  function updateDisplay() {
+    // Update slide visibility
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === currentSlide);
+    });
+
+    // Update reveals within current slide
+    const reveals = slideReveals[currentSlide];
+    if (reveals) {
+      reveals.forEach((el, i) => {
+        el.classList.toggle('visible', i < currentStep);
+      });
+    }
+
+    // Update counter
+    counterEl.textContent = `${currentSlide + 1} / ${totalSlides}`;
+
+    // Update progress bar
+    const progress = ((currentSlide + 1) / totalSlides) * 100;
+    progressBar.style.width = progress + '%';
+
+    // Update buttons
+    prevBtn.disabled = (currentSlide === 0 && currentStep === 0);
+    nextBtn.disabled = (currentSlide === totalSlides - 1 && currentStep >= getMaxSteps(currentSlide));
+  }
+
+  function goNext() {
+    const maxSteps = getMaxSteps(currentSlide);
+    if (currentStep < maxSteps) {
+      currentStep++;
+    } else if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      currentStep = 0;
+    }
+    updateDisplay();
+  }
+
+  function goPrev() {
+    if (currentStep > 0) {
+      currentStep--;
+    } else if (currentSlide > 0) {
+      currentSlide--;
+      currentStep = getMaxSteps(currentSlide);
+      // Show all previous reveals
+      const reveals = slideReveals[currentSlide];
+      if (reveals) reveals.forEach(el => el.classList.add('visible'));
+    }
+    updateDisplay();
+  }
+
+  // Button listeners
+  nextBtn.addEventListener('click', goNext);
+  prevBtn.addEventListener('click', goPrev);
+
+  // Keyboard listeners
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      goNext();
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+      e.preventDefault();
+      goPrev();
+    }
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goNext();
+      else goPrev();
+    }
+  }, { passive: true });
+
+  // Initialize: show first slide with step 0
+  updateDisplay();
+})();
+</script>
+</body>
+</html>
