@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clase 23: Ecuaciones Diferenciales — Variables Separables</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js" async></script>
+  <style>
+    :root {
+      --navy: #005293;
+      --navy-dark: #003a6b;
+      --green: #008250;
+      --green-light: #e8f5e9;
+      --orange: #dc6b1f;
+      --orange-light: #fff3e0;
+      --bg-grad-1: #f8fafc;
+      --bg-grad-2: #e2e8f0;
+      --glass: rgba(255,255,255,0.94);
+      --shadow: 0 12px 40px rgba(0,20,50,0.13);
+      --radius: 16px;
+      --font-text: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      font-family: var(--font-text);
+      background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+      color: #1e293b;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 16px;
+    }
+
+    #presentation-container {
+      width: 100%; height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      width: 90%; max-width: 1200px; height: 82vh;
+      background: var(--glass);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2.2rem 2.8rem;
+      overflow-y: auto;
+      opacity: 0; transform: scale(0.94) translateY(12px);
+      transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: none; z-index: 1;
+    }
+    .slide.active {
+      opacity: 1; transform: scale(1) translateY(0); pointer-events: all; z-index: 10;
+    }
+
+    .slide h2 {
+      font-size: clamp(1.4rem, 2.3vw, 1.85rem); font-weight: 700; color: var(--navy);
+      margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 3px solid var(--navy);
+      display: inline-block; letter-spacing: -0.02em;
+    }
+    .slide h3 { font-size: 1.15rem; font-weight: 600; color: var(--navy-dark); margin: 0.8rem 0 0.4rem; }
+    .slide p, .slide li, .slide td { font-size: clamp(0.9rem, 1.1vw, 1.02rem); line-height: 1.55; }
+    .slide ul, .slide ol { padding-left: 1.3rem; }
+    .slide li { margin-bottom: 0.35rem; }
+    .mt { margin-top: 0.8rem; } .mb { margin-bottom: 0.6rem; }
+    .bold { font-weight: 600; } .italic { font-style: italic; } .center { text-align: center; }
+
+    .col-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 0.8rem; }
+    @media (max-width: 850px) { .col-layout { grid-template-columns: 1fr; gap: 1rem; } .slide { padding: 1.5rem; width: 96%; height: 88vh; } }
+
+    .block, .example-block, .alert-block {
+      padding: 0.9rem 1.1rem; border-radius: 8px; margin-bottom: 0.9rem;
+      border-left: 5px solid transparent; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .block { background: rgba(0, 82, 147, 0.06); border-left-color: var(--navy); }
+    .block .b-title, .block strong { color: var(--navy); }
+    .example-block { background: var(--green-light); border-left-color: var(--green); }
+    .example-block .b-title, .example-block strong { color: var(--green); }
+    .alert-block { background: var(--orange-light); border-left-color: var(--orange); }
+    .alert-block .b-title, .alert-block strong { color: var(--orange); }
+    .b-title { font-weight: 600; display: block; margin-bottom: 0.35rem; }
+
+    /* Step Reveal System */
+    .reveal {
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    pre {
+      background: #0f172a; color: #e2e8f0; padding: 0.9rem 1rem; border-radius: 10px;
+      overflow-x: auto; font-family: var(--font-code); font-size: clamp(0.72rem, 0.85vw, 0.85rem);
+      line-height: 1.5; box-shadow: inset 0 0 0 1px #334155; margin: 0.5rem 0; white-space: pre;
+    }
+    .mk { color: #7dd3fc; font-weight: 600; } .mc { color: #6ee7b7; font-style: italic; }
+    .ms { color: #fca5a5; } .mf { color: #fbbf24; } .mn { color: #c084fc; } .mv { color: #e2e8f0; }
+    code { font-family: var(--font-code); background: #f1f5f9; padding: 0.12em 0.3em; border-radius: 4px; font-size: 0.95em; }
+
+    #progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: linear-gradient(90deg, var(--navy), var(--green)); z-index: 200; transition: width 0.3s ease; }
+    #nav-controls {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px); padding: 8px 20px; border-radius: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.13); z-index: 100;
+    }
+    .nav-btn {
+      background: var(--navy); color: white; border: none; width: 38px; height: 38px;
+      border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center;
+      font-size: 1rem; transition: background 0.2s, transform 0.12s;
+    }
+    .nav-btn:hover { background: var(--navy-dark); transform: scale(1.08); }
+    .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+    #slide-counter { font-family: var(--font-code); font-weight: 600; color: #334155; font-size: 0.95rem; min-width: 60px; text-align: center; }
+
+    .portada { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80%; text-align: center; }
+    .portada h1 { font-size: clamp(1.8rem, 3.5vw, 2.9rem); color: var(--navy); font-weight: 700; line-height: 1.15; }
+    .portada .sub { font-size: clamp(1.1rem, 2vw, 1.35rem); color: #475569; margin: 0.6rem 0 1.5rem; }
+    .portada .info { font-size: 1rem; color: #64748b; }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div id="presentation-container">
+
+  <!-- SLIDE 0: PORTADA -->
+  <div class="slide active" data-slide="0">
+    <div class="portada">
+      <i class="fas fa-filter" style="font-size:3.5rem; color:var(--navy); margin-bottom:1rem;"></i>
+      <h1>Ecuaciones Diferenciales:<br>Variables Separables</h1>
+      <p class="sub">Método de Separación de Variables</p>
+      <div class="block reveal">
+        <span class="b-title"><i class="fas fa-chalkboard-teacher"></i> Matemáticas 3</span>
+        <span>UTEC — Ingeniería Logística — Clase 23</span>
+      </div>
+      <p class="info mt reveal"><i class="fas fa-calendar-day"></i> Fecha: 10 de Junio de 2026</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 1: OBJETIVOS -->
+  <div class="slide" data-slide="1">
+    <h2><i class="fas fa-bullseye"></i> Objetivos de la Sesión</h2>
+    <div class="block reveal">
+      <span class="b-title"><i class="fas fa-flag"></i> Objetivo General</span>
+      <span>Aplicar el método de separación de variables para resolver ecuaciones diferenciales de primer orden.</span>
+    </div>
+    <p class="mt bold">Objetivos Específicos:</p>
+    <ol>
+      <li class="reveal">Identificar la forma estándar de una ecuación diferencial de variables separables.</li>
+      <li class="reveal">Dominar la manipulación algebraica para separar las variables \(x\) e \(y\).</li>
+      <li class="reveal">Integrar ambos lados de la ecuación para encontrar la solución general.</li>
+      <li class="reveal">Resolver problemas de valor inicial aplicando condiciones.</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 2: DEFINICIÓN -->
+  <div class="slide" data-slide="2">
+    <h2><i class="fas fa-book-open"></i> ¿Qué es una Ecuación de Variables Separables?</h2>
+    <p class="reveal">Es una EDO de primer orden que puede escribirse en la forma:</p>
+    <div class="alert-block mt reveal">
+      <span class="b-title"><i class="fas fa-file-signature"></i> Forma Estándar</span>
+      $$\frac{dy}{dx} = g(x) \, h(y)$$
+      <span>O equivalentemente:</span>
+      $$M(x)\,dx = N(y)\,dy$$
+    </div>
+    <p class="mt bold reveal">La clave:</p>
+    <div class="reveal">
+      <span>Podemos "separar" todo lo que depende de \(x\) (incluyendo \(dx\)) a un lado de la ecuación, y todo lo que depende de \(y\) (incluyendo \(dy\)) al otro lado.</span>
+    </div>
+    <p class="mt bold reveal">Ejemplos:</p>
+    <ul>
+      <li class="reveal"><strong>Sí es separable:</strong> \(\frac{dy}{dx} = x y^2 \quad\to\quad \frac{dy}{y^2} = x\,dx\).</li>
+      <li class="reveal"><strong>No es separable:</strong> \(\frac{dy}{dx} = x + y\) (No es producto de funciones de \(x\) e \(y\)).</li>
+    </ul>
+  </div>
+
+  <!-- SLIDE 3: ALGORITMO -->
+  <div class="slide" data-slide="3">
+    <h2><i class="fas fa-list-ol"></i> Pasos para Resolver (Método)</h2>
+    <ol class="mt">
+      <li class="reveal"><strong>Identificar:</strong> Verificar si la ecuación es separable.</li>
+      <li class="reveal"><strong>Separar:</strong> Mover algebraicamente los términos.<br>
+        $$\frac{dy}{dx} = g(x)h(y) \implies \frac{1}{h(y)}\,dy = g(x)\,dx$$
+        <span class="italic">Nota: Hay que tener cuidado si \(h(y)=0\) (soluciones singulares).</span>
+      </li>
+      <li class="reveal"><strong>Integrar:</strong> Aplicar integral a ambos lados.<br>
+        $$\int \frac{1}{h(y)}\,dy = \int g(x)\,dx$$
+      </li>
+      <li class="reveal"><strong>Resolver:</strong> Calcular las integrales y despejar \(y\) (si es posible).</li>
+      <li class="reveal"><strong>Constante:</strong> Agregar la constante de integración \(C\) (solo una vez, usualmente en el lado de \(x\) o \(y\)).</li>
+    </ol>
+    <div class="block mt reveal">
+      <span class="b-title">Resultado</span>
+      <span>La solución suele ser implícita: \(H(y) = G(x) + C\). A veces se puede despejar \(y\) explícitamente.</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: EJEMPLO 1 -->
+  <div class="slide" data-slide="4">
+    <h2><i class="fas fa-pencil-alt"></i> Ejemplo Guiado 1: Separación Básica</h2>
+    <div class="block reveal">
+      <span class="b-title">Problema</span>
+      <span>Resolver la ecuación diferencial \(\displaystyle \frac{dy}{dx} = \frac{x^2}{y}\).</span>
+    </div>
+    <p class="mt bold reveal">Solución Paso a Paso:</p>
+    <ol>
+      <li class="reveal"><strong>Separar variables:</strong> Multiplicamos por \(y\) y por \(dx\).<br> \(y\,dy = x^2\,dx\)</li>
+      <li class="reveal"><strong>Integrar ambos lados:</strong> \(\displaystyle \int y\,dy = \int x^2\,dx\)</li>
+      <li class="reveal"><strong>Calcular integrales:</strong> \(\displaystyle \frac{y^2}{2} = \frac{x^3}{3} + C_1\)</li>
+      <li class="reveal"><strong>Simplificar (Solución Implícita):</strong> Multiplicamos por 6 para limpiar fracciones:<br> \(3y^2 = 2x^3 + C\) (donde \(C = 6C_1\))</li>
+      <li class="reveal"><strong>Solución Explícita:</strong> \(\displaystyle \boxed{y = \pm \sqrt{\frac{2x^3 + C}{3}}}\)</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 5: EJEMPLO 2 (PIV) -->
+  <div class="slide" data-slide="5">
+    <h2><i class="fas fa-pencil-alt"></i> Ejemplo Guiado 2: Problema de Valor Inicial (PIV)</h2>
+    <div class="block reveal">
+      <span class="b-title">Problema</span>
+      <span>Resolver \(\displaystyle \frac{dy}{dx} = y \cos x\), sujeto a \(y(0) = 2\).</span>
+    </div>
+    <ol class="mt">
+      <li class="reveal"><strong>Separar:</strong> \(\displaystyle \frac{dy}{y} = \cos x\,dx \quad (y \neq 0)\)</li>
+      <li class="reveal"><strong>Integrar:</strong> \(\displaystyle \int \frac{1}{y}dy = \int \cos x\,dx \implies \ln|y| = \sin x + C\)</li>
+      <li class="reveal"><strong>Despejar \(y\) (Exponencial):</strong><br> \(|y| = e^{\sin x + C} = e^C e^{\sin x} \implies y = \pm e^C e^{\sin x}\)<br> Llamemos \(A = \pm e^C\) (nueva constante). \(\implies y = A e^{\sin x}\)</li>
+      <li class="reveal"><strong>Aplicar Condición Inicial</strong> (\(x=0, y=2\)):<br> \(2 = A e^{\sin 0} \implies 2 = A e^0 \implies A = 2\)</li>
+      <li class="reveal"><strong>Solución Particular:</strong> \(\displaystyle \boxed{y = 2 e^{\sin x}}\)</li>
+    </ol>
+  </div>
+
+  <!-- SLIDE 6: PRÁCTICA ACTIVA -->
+  <div class="slide" data-slide="6">
+    <h2><i class="fas fa-dumbbell"></i> Práctica Activa</h2>
+    <div class="alert-block reveal">
+      <span class="b-title"><i class="fas fa-clock"></i> Instrucciones</span>
+      <span>Resuelva las siguientes ecuaciones. Tiempo: 30 minutos.</span>
+    </div>
+    <ol class="mt">
+      <li class="reveal">\(\displaystyle \frac{dy}{dx} = e^{x-y}\) <span class="italic">(Sugerencia: Recuerde \(e^{x-y} = e^x e^{-y}\)).</span></li>
+      <li class="reveal">\(\displaystyle (x^2 + 1) y' = xy\) <span class="italic">(Sugerencia: Separe la \(x\) de la \(y\)).</span></li>
+      <li class="reveal"><strong>PIV:</strong> \(\displaystyle \frac{dy}{dt} = 2y(1-t)\), con \(y(0) = 1\).</li>
+      <li class="reveal"><strong>Aplicación:</strong> La tasa de crecimiento de una bacteria es proporcional a su población actual. Si la población se triplica en 2 horas, ¿cuál es la ecuación que modela la población \(P(t)\)? (Plantee y encuentre la constante de proporcionalidad).</li>
+    </ol>
+  </div>
+
+  
+  <!-- SLIDE 8: PASO A PASO EJ 1 -->
+  <div class="slide" data-slide="8">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 1</h2>
+    <div class="block reveal"><span class="b-title">Enunciado</span> \(\frac{dy}{dx} = e^{x-y}\)</div>
+    <ol class="mt">
+      <li class="reveal"><strong>Paso 1: Reescribir usando propiedades de potencias.</strong><br> \(e^{x-y} = e^x \cdot e^{-y} \implies \frac{dy}{dx} = e^x e^{-y}\)</li>
+      <li class="reveal"><strong>Paso 2: Separar variables.</strong> Multiplicamos por \(e^y dx\):<br> \(e^y \, dy = e^x \, dx\)</li>
+      <li class="reveal"><strong>Paso 3: Integrar ambos lados.</strong><br> \(\int e^y \, dy = \int e^x \, dx \implies e^y = e^x + C\)</li>
+      <li class="reveal"><strong>Paso 4: Despejar \(y\) (Solución Explícita).</strong><br> \(y = \ln(e^x + C)\)</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Resultado Final:</span> \(y(x) = \ln(e^x + C)\)</div>
+  </div>
+
+  <!-- SLIDE 9: PASO A PASO EJ 2 -->
+  <div class="slide" data-slide="9">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 2</h2>
+    <div class="block reveal"><span class="b-title">Enunciado</span> \((x^2 + 1) y' = xy\)</div>
+    <ol class="mt">
+      <li class="reveal"><strong>Paso 1: Separar variables.</strong> \(\frac{dy}{y} = \frac{x}{x^2+1} dx\)</li>
+      <li class="reveal"><strong>Paso 2: Integrar ambos lados.</strong><br> \(\int \frac{1}{y} dy = \int \frac{x}{x^2+1} dx\)</li>
+      <li class="reveal"><strong>Paso 3: Resolver la integral de la derecha (sustitución \(u = x^2+1\), \(du = 2x\,dx\)).</strong><br> \(\ln|y| = \frac{1}{2}\ln(x^2+1) + C\)</li>
+      <li class="reveal"><strong>Paso 4: Aplicar exponencial y simplificar.</strong><br> \(|y| = e^C (x^2+1)^{1/2}\). Llamando \(A = \pm e^C\):<br> \(y = A\sqrt{x^2+1}\)</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Resultado Final:</span> \(y(x) = A\sqrt{x^2+1}\)</div>
+  </div>
+
+  <!-- SLIDE 10: PASO A PASO EJ 3 -->
+  <div class="slide" data-slide="10">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 3 (PIV)</h2>
+    <div class="block reveal"><span class="b-title">Enunciado</span> \(\frac{dy}{dt} = 2y(1-t)\), con \(y(0) = 1\)</div>
+    <ol class="mt">
+      <li class="reveal"><strong>Paso 1: Separar variables.</strong> \(\frac{dy}{y} = 2(1-t)\,dt\)</li>
+      <li class="reveal"><strong>Paso 2: Integrar.</strong><br> \(\ln y = 2t - t^2 + C\) (Asumimos \(y>0\) por la condición inicial)</li>
+      <li class="reveal"><strong>Paso 3: Aplicar condición inicial \(y(0)=1\).</strong><br> \(\ln(1) = 0 - 0 + C \implies C = 0\)</li>
+      <li class="reveal"><strong>Paso 4: Despejar \(y\).</strong><br> \(\ln y = 2t - t^2 \implies y = e^{2t - t^2}\)</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Resultado Final:</span> \(y(t) = e^{2t - t^2}\)</div>
+  </div>
+
+  <!-- SLIDE 11: PASO A PASO EJ 4 -->
+  <div class="slide" data-slide="11">
+    <h2><i class="fas fa-list-ol"></i> Resolución Paso a Paso — Ejercicio 4 (Aplicación)</h2>
+    <div class="block reveal"><span class="b-title">Enunciado</span> Tasa de crecimiento \(\propto\) población actual. Se triplica en 2 horas. Hallar \(k\) y el modelo.</div>
+    <ol class="mt">
+      <li class="reveal"><strong>Paso 1: Plantear la EDO.</strong><br> \(\frac{dP}{dt} = kP\)</li>
+      <li class="reveal"><strong>Paso 2: Separar e integrar.</strong><br> \(\int \frac{dP}{P} = \int k\,dt \implies \ln P = kt + C \implies P(t) = P_0 e^{kt}\)</li>
+      <li class="reveal"><strong>Paso 3: Usar dato de crecimiento.</strong><br> \(P(2) = 3P_0 \implies 3P_0 = P_0 e^{2k} \implies 3 = e^{2k}\)</li>
+      <li class="reveal"><strong>Paso 4: Despejar \(k\).</strong><br> \(\ln 3 = 2k \implies k = \frac{\ln 3}{2} \approx 0.549 \, \)</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Modelo Final:</span> \(P(t) = P_0 e^{\left(\frac{\ln 3}{2}\right)t}\)</div>
+  </div>
+
+  <!-- SLIDE 12: CASO INDUSTRIAL -->
+  <div class="slide" data-slide="12">
+    <h2><i class="fas fa-industry"></i> Caso de Estudio Industrial (Logística)</h2>
+    <div class="block reveal"><span class="b-title"><i class="fas fa-chart-line"></i> Título: Modelo de Difusión de Innovación en Supply Chain</span></div>
+    <p class="mt reveal"><strong>Contexto:</strong> Se implementa un nuevo software de gestión. La tasa de adopción es proporcional al número que ya lo usan (\(A\)) y al que aún no (\(N-A\)), donde \(N\) es el total.</p>
+    <div class="alert-block mt reveal"><span class="b-title">Modelo:</span> $$\frac{dA}{dt} = k A (N - A)$$</div>
+    <p class="mt reveal"><strong>Problema:</strong> \(N=100\), \(A(0)=5\), \(A(2)=30\). ¿Cuántos lo habrán adoptado en la semana 4?</p>
+    <ol class="mt">
+      <li class="reveal">Separar: \(\frac{dA}{A(N-A)} = k\,dt\)</li>
+      <li class="reveal">Fracciones parciales: \(\frac{1}{N}\left(\frac{1}{A} + \frac{1}{N-A}\right)dA = k\,dt\)</li>
+      <li class="reveal">Integrar: \(\ln\left(\frac{A}{N-A}\right) = Nkt + C\)</li>
+      <li class="reveal">Despejar: \(A(t) = \frac{N}{1 + C e^{-Nkt}}\)</li>
+      <li class="reveal">Con datos: Encontrar \(k\) y \(C\) usando \(A(0)=5\) y \(A(2)=30\). (Cálculo numérico).</li>
+      <li class="reveal">Predecir \(A(4)\).</li>
+    </ol>
+    <div class="example-block mt reveal"><span class="b-title">Resultado:</span> Modelo logístico clásico. Predice la saturación del mercado.</div>
+  </div>
+
+  <!-- SLIDE 13: CÓDIGO MATLAB -->
+  <div class="slide" data-slide="13">
+    <h2><i class="fas fa-laptop-code"></i> Código MATLAB - Resolución Simbólica</h2>
+    <div class="block reveal"><span class="b-title">Uso de <code>dsolve</code> para verificar soluciones.</span></div>
+    <pre class="reveal"><span class="mc">% Ejercicio 1: dy/dx = e^(x-y)</span>
+<span class="mk">syms</span> <span class="mv">y</span>(<span class="mn">t</span>) <span class="mv">x</span>
+<span class="mc">% dsolve usa t por defecto como variable independiente</span>
+<span class="mv">ode</span> = <span class="mf">diff</span>(y, t) == <span class="mf">exp</span>(t - y);
+
+<span class="mc">% Resolver</span>
+<span class="mv">sol</span> = <span class="mf">dsolve</span>(ode);
+<span class="mk">disp</span>(<span class="ms">'Solucion General:'</span>);
+<span class="mk">disp</span>(sol);
+
+<span class="mc">% Verificar con PVI (Ejemplo 2: y' = y*cos(x), y(0)=2)</span>
+<span class="mk">syms</span> <span class="mv">y</span>(<span class="mn">x</span>)
+<span class="mv">ode2</span> = <span class="mf">diff</span>(y, x) == y * <span class="mf">cos</span>(x);
+<span class="mv">cond</span> = y(<span class="mn">0</span>) == <span class="mn">2</span>;
+<span class="mv">sol2</span> = <span class="mf">dsolve</span>(ode2, cond);
+<span class="mk">disp</span>(<span class="ms">'Solucion Particular Ejemplo 2:'</span>);
+<span class="mk">disp</span>(sol2);</pre>
+    <div class="example-block mt reveal"><span class="b-title"><i class="fas fa-lightbulb"></i> Tip:</span> <code>dsolve</code> resuelve automáticamente y devuelve la solución simbólica. Útil para comprobar cálculos manuales.</div>
+  </div>
+
+  <!-- SLIDE 14: CIERRE -->
+  <div class="slide" data-slide="14">
+    <h2><i class="fas fa-flag-checkered"></i> Cierre Conceptual</h2>
+    <p class="bold reveal">Resumen de la Clase:</p>
+    <ul class="mt">
+      <li class="reveal">El método de separación de variables es la "primera línea de ataque" para una EDO.</li>
+      <li class="reveal">Requiere que la ecuación sea un producto de una función de \(x\) por una función de \(y\).</li>
+      <li class="reveal">El proceso es puramente algebraico (separar) y calculístico (integrar).</li>
+    </ul>
+    <div class="block mt reveal">
+      <span class="b-title"><i class="fas fa-calendar-alt"></i> Próxima Clase</span>
+      <span><strong>Clase 24:</strong> Ecuaciones Diferenciales Lineales de Primer Orden.<br>
+      <strong>Preparación:</strong> ¿Qué hacer si la ecuación NO es separable? (Ej. \(y' + p(x)y = q(x)\)).</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVIGATION -->
+<nav id="nav-controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+  <span id="slide-counter">1 / 15</span>
+  <button class="nav-btn" id="nextBtn" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+</nav>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let currentStep = 0;
+
+  const counterEl = document.getElementById('slide-counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressBar = document.getElementById('progress-bar');
+
+  const slideReveals = [];
+  slides.forEach(slide => {
+    slideReveals.push(Array.from(slide.querySelectorAll('.reveal')));
+  });
+
+  function getMaxSteps(idx) { return slideReveals[idx].length; }
+
+  function updateDisplay() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+
+    const reveals = slideReveals[currentSlide];
+    reveals.forEach((el, i) => el.classList.toggle('visible', i < currentStep));
+
+    counterEl.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+    prevBtn.disabled = (currentSlide === 0 && currentStep === 0);
+    nextBtn.disabled = (currentSlide === totalSlides - 1 && currentStep >= getMaxSteps(currentSlide));
+  }
+
+  function goNext() {
+    const max = getMaxSteps(currentSlide);
+    if (currentStep < max) {
+      currentStep++;
+    } else if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      currentStep = 0;
+    }
+    updateDisplay();
+  }
+
+  function goPrev() {
+    if (currentStep > 0) {
+      currentStep--;
+    } else if (currentSlide > 0) {
+      currentSlide--;
+      currentStep = getMaxSteps(currentSlide);
+      slideReveals[currentSlide].forEach(el => el.classList.add('visible'));
+    }
+    updateDisplay();
+  }
+
+  nextBtn.addEventListener('click', goNext);
+  prevBtn.addEventListener('click', goPrev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); goNext(); }
+    if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); goPrev(); }
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive: true});
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) diff > 0 ? goNext() : goPrev();
+  }, {passive: true});
+
+  updateDisplay();
+})();
+</script>
+</body>
+</html>
